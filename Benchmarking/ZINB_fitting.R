@@ -20,7 +20,9 @@ simulate_counts_from_ZINB <- function(nc,ng){
   
   row.names(counts) <- paste('gene',1:ng,sep='')
   colnames(counts) <- paste('cell',1:nc,sep='')
-  return(list(mat=counts, params=data.frame(mu=mu_vec, r=r_vec, d=d_vec, N=rep(nc, length(mu_vec)))))
+  param_df <- data.frame(mu=mu_vec, r=r_vec, d=d_vec, N=rep(nc, length(mu_vec)))
+  rownames(param_df) <- rownames(counts);
+  return(list(mat=counts, params= param_df))
 }
 
 simulate_counts_from_NB <- function(nc,ng){
@@ -43,10 +45,58 @@ simulate_counts_from_NB <- function(nc,ng){
   return(list(mat=counts, params=data.frame(mu=mu_vec, r=r_vec, N=rep(nc, length(mu_vec)))))
 }
 
+library(TreeOfCells)
 
-sim <- simulate_counts_from_ZINB(3000, 30000)
+set.seed(1192)
+sim <- simulate_counts_from_ZINB(3000, 50000)
 fit <- TreeOfCells::fit_ZINB_to_matrix(sim$mat)
 
 
-sim2 <- simulate_counts_from_NB(3000, 30000)
-fit2 <- TreeOfCells::fit_NB_to_matrix(sim$mat)
+sim2 <- simulate_counts_from_NB(3000, 50000)
+clean <- which(rowSums(sim2$mat) > 0)
+sim2$mat <- sim2$mat[clean,]
+sim2$params <- sim2$params[clean,]
+fit2 <- TreeOfCells::fit_NB_to_matrix(sim2$mat)
+
+err <- (fit2[,1:2] - sim2$params[,1:2])/sim2$params[,1:2]
+err <- abs(err)*100;
+
+sim_fit_out <- list(ZINB_sim=sim$params, ZINB_fit=fit, NB_sim=sim2$params, NB_fit=fit2)
+saveRDS(sim_fit_out, "Fitting_Errors_nc3000.rds")
+
+
+set.seed(1192)
+sim <- simulate_counts_from_ZINB(300, 50000)
+fit <- TreeOfCells::fit_ZINB_to_matrix(sim$mat)
+
+
+sim2 <- simulate_counts_from_NB(300, 50000)
+clean <- which(rowSums(sim2$mat) > 0)
+sim2$mat <- sim2$mat[clean,]
+sim2$params <- sim2$params[clean,]
+fit2 <- TreeOfCells::fit_NB_to_matrix(sim2$mat)
+
+err <- (fit2[,1:2] - sim2$params[,1:2])/sim2$params[,1:2]
+err <- abs(err)*100;
+
+sim_fit_out <- list(ZINB_sim=sim$params, ZINB_fit=fit, NB_sim=sim2$params, NB_fit=fit2)
+saveRDS(sim_fit_out, "Fitting_Errors_nc300.rds")
+
+set.seed(1192)
+sim <- simulate_counts_from_ZINB(30, 50000)
+fit <- TreeOfCells::fit_ZINB_to_matrix(sim$mat)
+
+
+sim2 <- simulate_counts_from_NB(30, 50000)
+clean <- which(rowSums(sim2$mat) > 0)
+sim2$mat <- sim2$mat[clean,]
+sim2$params <- sim2$params[clean,]
+fit2 <- TreeOfCells::fit_NB_to_matrix(sim2$mat)
+
+err <- (fit2[,1:2] - sim2$params[,1:2])/sim2$params[,1:2]
+err <- abs(err)*100;
+
+sim_fit_out <- list(ZINB_sim=sim$params, ZINB_fit=fit, NB_sim=sim2$params, NB_fit=fit2)
+saveRDS(sim_fit_out, "Fitting_Errors_nc30.rds")
+
+
